@@ -142,33 +142,32 @@ class OpenCodeApp {
     }
 
     async generateResponse(message) {
-        // Usar API gratuita do HuggingFace - modelo que funciona sem key
-        try {
-            const response = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-small', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    inputs: `Responda em português de forma simples e amigável: ${message}`,
-                    parameters: {
-                        max_new_tokens: 200,
-                        temperature: 0.8
+        // URLs de APIs gratuitas públicas (podem variar)
+        const apis = [
+            { url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', body: { inputs: `<s>[INST] Responda em português de forma simples: ${message} [/INST]`, parameters: { max_new_tokens: 150 } } },
+            { url: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct', body: { inputs: `<|begin_of_text|>Responda em português de forma simples: ${message}<|end_of_text|>`, parameters: { max_new_tokens: 150 } } }
+        ];
+        
+        for (const api of apis) {
+            try {
+                const response = await fetch(api.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(api.body)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data[0] && data[0].generated_text) {
+                        let answer = data[0].generated_text;
+                        answer = answer.replace(/<.*?>/g, '').trim();
+                        if (answer.length > 20) return answer.substring(0, 300);
                     }
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data[0] && data[0].generated_text) {
-                    return data[0].generated_text.trim();
                 }
-            }
-        } catch (e) {
-            console.log('API failed, trying fallback');
+            } catch (e) {}
         }
         
-        // Fallback para respostas predefinidas
+        // Respostas predefinidas para perguntas comuns
         
         // Respostas simples para tarefas comuns
         if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('ola')) {
