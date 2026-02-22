@@ -1,15 +1,30 @@
 // OpenCode Mobile - Main App
 
+// OpenRouter Models (Free)
+const OPENROUTER_MODELS = [
+    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1', params: '671B', context: '164K', desc: 'Excelente reasoning' },
+    { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large', params: '400B', context: '131K', desc: 'Muito potente' },
+    { id: 'qwen/qwen3-next-80b-a3b-instruct:free', name: 'Qwen3 Next 80B', params: '80B', context: '262K', desc: 'Maior contexto' },
+    { id: 'nvidia/nemotron-3-nano-30b-a3b:free', name: 'Nemotron 30B', params: '30B', context: '256K', desc: 'NVIDIA' },
+    { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', params: '27B', context: '131K', desc: 'Google' },
+    { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', params: '70B', context: '128K', desc: 'Meta' },
+    { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral 3.1 24B', params: '24B', context: '128K', desc: 'Multimodal' },
+    { id: 'stepfun/step-3.5-flash:free', name: 'Step 3.5 Flash', params: '196B', context: '256K', desc: 'StepFun' },
+    { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', params: '480B', context: '262K', desc: 'Especialista em código' },
+    { id: 'liquid/lfm-2.5-1.2b-thinking:free', name: 'LFM Thinking', params: '1.2B', context: '32K', desc: 'Leve e rápido' }
+];
+
 class OpenCodeApp {
     constructor() {
         this.messages = [];
         this.model = null;
         this.modelLoaded = false;
         this.isGenerating = false;
+        this.currentMode = localStorage.getItem('currentMode') || 'local'; // local, openrouter, antigravity
         this.settings = {
             theme: localStorage.getItem('theme') || 'dark',
-            model: localStorage.getItem('model') || 'phi3',
-            responseMode: localStorage.getItem('responseMode') || 'balanced',
+            model: localStorage.getItem('model') || 'deepseek/deepseek-r1:free',
+            openrouterKey: localStorage.getItem('openrouterKey') || '',
             useAntigravity: localStorage.getItem('useAntigravity') === 'true',
             antigravityKey: localStorage.getItem('antigravityKey') || ''
         };
@@ -26,6 +41,11 @@ class OpenCodeApp {
     }
 
     setupEventListeners() {
+        // Mode tabs
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => this.switchMode(tab.dataset.mode));
+        });
+
         // Send button
         document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
         
@@ -57,10 +77,10 @@ class OpenCodeApp {
             localStorage.setItem('model', e.target.value);
         });
 
-        // Response mode
-        document.getElementById('responseMode').addEventListener('change', (e) => {
-            this.settings.responseMode = e.target.value;
-            localStorage.setItem('responseMode', e.target.value);
+        // OpenRouter key
+        document.getElementById('openrouterKey').addEventListener('input', (e) => {
+            this.settings.openrouterKey = e.target.value;
+            localStorage.setItem('openrouterKey', e.target.value);
         });
 
         // Antigravity toggle
@@ -97,6 +117,20 @@ class OpenCodeApp {
         });
     }
 
+    switchMode(mode) {
+        this.currentMode = mode;
+        localStorage.setItem('currentMode', mode);
+        
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.mode === mode);
+        });
+
+        document.getElementById('openrouterSettings').classList.toggle('hidden', mode !== 'openrouter');
+        document.getElementById('antigravitySettings').classList.toggle('hidden', mode !== 'antigravity');
+        
+        this.updateModelStatus();
+    }
+
     updateSendButton() {
         const input = document.getElementById('userInput');
         const btn = document.getElementById('sendBtn');
@@ -116,11 +150,25 @@ class OpenCodeApp {
 
     openSettings() {
         document.getElementById('settingsModal').classList.remove('hidden');
-        document.getElementById('modelSelect').value = this.settings.model;
-        document.getElementById('responseMode').value = this.settings.responseMode;
+        
+        // Populate OpenRouter models
+        const modelSelect = document.getElementById('modelSelect');
+        modelSelect.innerHTML = OPENROUTER_MODELS.map(m => 
+            `<option value="${m.id}">${m.name} (${m.params})</option>`
+        ).join('');
+        
+        modelSelect.value = this.settings.model;
+        document.getElementById('openrouterKey').value = this.settings.openrouterKey;
         document.getElementById('antigravityToggle').checked = this.settings.useAntigravity;
         document.getElementById('antigravityKey').value = this.settings.antigravityKey;
         document.getElementById('antigravityKeyGroup').classList.toggle('hidden', !this.settings.useAntigravity);
+        
+        // Set current mode
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.mode === this.currentMode);
+        });
+        document.getElementById('openrouterSettings').classList.toggle('hidden', this.currentMode !== 'openrouter');
+        document.getElementById('antigravitySettings').classList.toggle('hidden', this.currentMode !== 'antigravity');
     }
 
     closeSettings() {
@@ -226,11 +274,19 @@ class OpenCodeApp {
         const statusText = statusEl.querySelector('.status-text');
         const indicator = statusEl.querySelector('.status-indicator');
 
-        if (this.modelLoaded) {
-            statusText.textContent = 'Modelo pronto';
+        if (this.currentMode === 'openrouter' && this.settings.openrouterKey) {
+            const modelInfo = OPENROUTER_MODELS.find(m => m.id === this.settings.model);
+            statusText.textContent = `OpenRouter: ${modelInfo?.name || 'Modelo'}`;
+            indicator.classList.add('ready');
+        } else if (this.currentMode === 'antigravity' && this.settings.antigravityKey) {
+            statusText.textContent = 'Antigravity Online';
+            indicator.classList.add('ready');
+        } else if (this.modelLoaded) {
+            statusText.textContent = 'Modelo Local Pronto';
             indicator.classList.add('ready');
         } else {
-            statusText.textContent = 'Carregando modelo...';
+            statusText.textContent = 'Modo Offline - Use API Key';
+            indicator.classList.remove('ready');
         }
     }
 
@@ -240,14 +296,70 @@ class OpenCodeApp {
         
         if (!message || this.isGenerating) return;
 
-        // If using Antigravity and has internet
-        if (this.settings.useAntigravity && this.settings.antigravityKey) {
+        // Route to appropriate service
+        if (this.currentMode === 'openrouter' && this.settings.openrouterKey) {
+            await this.sendToOpenRouter(message);
+        } else if (this.currentMode === 'antigravity' && this.settings.useAntigravity && this.settings.antigravityKey) {
             await this.sendToAntigravity(message);
-            return;
+        } else {
+            await this.sendToLocalModel(message);
+        }
+    }
+
+    async sendToOpenRouter(message) {
+        const input = document.getElementById('userInput');
+        input.value = '';
+        this.updateSendButton();
+
+        document.getElementById('welcomeScreen').style.display = 'none';
+        
+        this.addMessage(message, 'user');
+        this.messages.push({ role: 'user', content: message });
+        this.saveMessages();
+
+        const typingId = this.showTyping();
+        this.isGenerating = true;
+        this.updateSendButton();
+
+        try {
+            const modelInfo = OPENROUTER_MODELS.find(m => m.id === this.settings.model) || OPENROUTER_MODELS[0];
+            
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.settings.openrouterKey}`,
+                    'HTTP-Referer': 'https://osamuelnovaes.github.io/opencode-ios',
+                    'X-Title': 'OpenCode Mobile'
+                },
+                body: JSON.stringify({
+                    model: this.settings.model,
+                    messages: this.messages,
+                    max_tokens: 8192
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API error');
+            }
+
+            const data = await response.json();
+            const assistantMessage = data.choices[0].message.content;
+
+            this.removeTyping(typingId);
+            this.addMessage(assistantMessage, 'ai');
+            this.messages.push({ role: 'assistant', content: assistantMessage });
+            this.saveMessages();
+
+        } catch (error) {
+            console.error('OpenRouter error:', error);
+            this.removeTyping(typingId);
+            this.addMessage(`Erro: ${error.message}`, 'ai');
         }
 
-        // Otherwise use local model
-        await this.sendToLocalModel(message);
+        this.isGenerating = false;
+        this.updateSendButton();
     }
 
     async sendToLocalModel(message) {
@@ -457,6 +569,8 @@ class OpenCodeApp {
             document.getElementById('welcomeScreen').style.display = 'block';
             this.closeSettings();
         }
+    }
+}
     }
 }
 

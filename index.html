@@ -35,7 +35,20 @@
         <!-- Model Status Bar -->
         <div id="modelStatus" class="model-status">
             <div class="status-indicator"></div>
-            <span class="status-text">Carregando modelo...</span>
+            <span class="status-text">Iniciando...</span>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="local">
+                📱 Offline
+            </button>
+            <button class="mode-tab" data-mode="openrouter">
+                🌐 OpenRouter
+            </button>
+            <button class="mode-tab" data-mode="antigravity">
+                ⚡ Antigravity
+            </button>
         </div>
 
         <!-- Chat Container -->
@@ -84,36 +97,38 @@
                 </div>
                 <div class="modal-body">
                     <div class="setting-group">
-                        <label>Modelo de IA</label>
+                        <label>Selecionar Modelo (OpenRouter Free)</label>
                         <select id="modelSelect">
-                            <option value="phi3">Phi-3 Mini (Recomendado)</option>
-                            <option value="gemma">Gemma 3n 2B</option>
-                            <option value="llama">Llama 3.2 1B</option>
                         </select>
+                        <small style="color: var(--text-muted)">Todos os modelos são gratuitos!</small>
                     </div>
-                    <div class="setting-group">
-                        <label>Modo de Resposta</label>
-                        <select id="responseMode">
-                            <option value="balanced">Equilibrado</option>
-                            <option value="creative">Criativo</option>
-                            <option value="precise">Preciso</option>
-                        </select>
+                    
+                    <div class="setting-group" id="openrouterSettings">
+                        <label>API Key OpenRouter</label>
+                        <input type="password" id="openrouterKey" placeholder="Cole sua API key do OpenRouter">
+                        <small style="color: var(--text-muted)">
+                            <a href="https://openrouter.ai/settings" target="_blank" style="color: var(--accent-primary)">Obter chave grátis</a>
+                        </small>
                     </div>
-                    <div class="setting-group">
+                    
+                    <div class="setting-group" id="antigravitySettings">
                         <label>
                             <input type="checkbox" id="antigravityToggle">
-                            Usar Antigravity (requer internet)
+                            Usar Antigravity
                         </label>
+                        <input type="password" id="antigravityKey" placeholder="Cole sua API key Antigravity">
                     </div>
-                    <div class="setting-group antigravity-key hidden" id="antigravityKeyGroup">
-                        <label>API Key Antigravity</label>
-                        <input type="password" id="antigravityKey" placeholder="Cole sua API key">
-                    </div>
+                    
                     <div class="setting-group">
                         <button id="clearHistory" class="danger-btn">🗑️ Limpar Histórico</button>
                     </div>
-                    <div class="setting-group">
-                        <button id="downloadModel" class="secondary-btn">📥 Baixar Modelo Novamente</button>
+                    
+                    <div class="setting-group" id="localSettings">
+                        <p style="color: var(--text-muted); font-size: 13px;">
+                            📱 Modo Offline usa Transformers.js (modelo leve no navegador)<br>
+                            🌐 OpenRouter requer API key (modelos poderosos gratuitos)<br>
+                            ⚡ Antigravity requer API key
+                        </p>
                     </div>
                 </div>
             </div>
