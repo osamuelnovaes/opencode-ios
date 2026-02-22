@@ -2,42 +2,83 @@
 
 ## 1. Visão Geral do Projeto
 
-**Nome do Projeto:** OpenCode Mobile (iOS)
-**Tipo:** Aplicativo iOS Offline (IPA)
-**Resumo:** Versão mobile do OpenCode que roda IA offline no iPhone 13 - sem necessidade de internet
-**Usuários Alvo:** Desenvolvedores que precisam de coding assistant offline
-**Dispositivo:** iPhone 13 (A15 Bionic, ~4GB RAM disponível)
+**Nome do Projeto:** OpenCode Mobile iOS
+**Tipo:** Progressive Web App (PWA) - instala no iPhone pelo Safari
+**Resumo:** App de coding assistant com IA rodando offline no iPhone 13
+**Dispositivo Inicial:** iPhone 13 (A15 Bionic, ~4GB RAM)
+**Expansão:** Samsung, LG, Motorola e outros Android/iOS
 
 ---
 
-## 2. Arquitetura do App Offline
+## 2. Decisões Tomadas
 
-### 2.1 Modelo de IA Local
-O iPhone 13 tem limitação de RAM (~4GB disponíveis para apps). Opções:
+### ✅ Arquitetura
+- **Tipo:** PWA (Web App que instala no iPhone)
+- **Instalação:** Via Safari - "Adicionar à Tela de Início"
+- **Offline:** Sim - IA roda local após primeiro download
+- **Backend:** None (totalmente client-side)
 
-| Modelo | Params | RAM Neces. | Adequado? |
-|--------|--------|------------|-----------|
-| Gemma 3n 2B | 2B | ~1.5GB | ✅ Recomendado |
-| Gemma 3n 4B | 4B | ~3GB | ✅ Possível |
-| Phi-3 Mini | 3.8B | ~2.5GB | ✅ Possível |
-| Llama 3.2 1B | 1B | ~800MB | ✅ Rápido |
-| Mistral 7B | 7B | ~6GB+ | ❌ Muita RAM |
+### ✅ Modelo de IA
+- **Primário:** Phi-3 Mini ou Gemma 3n 2B (leves, ~1.5-2GB RAM)
+- **Opcional:** Antigravity via API (para quando tiver internet)
 
-- [ ] Qual modelo você prefere usar?
-  - **Gemma 3n** (Google, multimodal)
-  - **Phi-3** (Microsoft, otimizado mobile)
-  - **Llama 3.2 1B** (Meta, leve)
-  - Ou outro?
+### ✅ Interface
+- Estilo ChatGPT
+- Tema claro/escuro
+- Histórico local
 
-### 2.2 Formato do App
-- [ ] Quer um arquivo `.ipa` (precisa jailbreak ou Xcode)?
-- [ ] Ou prefere um app web que baixa o modelo uma vez e roda localmente?
-- [ ] O app deve ser um "wrapper" que roda o modelo via WebGPU/WASM no navegador?
+### ✅ Login
+- Sem necessidade - app direto
 
-### 2.3 Como o usuário instala?
-- [ ] Via Xcode (precisa Mac)?
-- [ ] Via altStore/jailbreak?
-- [ ] Ou um web app PWA que faz download do modelo e roda no Safari?
+### ✅ Nome
+- Repositório: `opencode-ios`
+- App: "OpenCode Mobile"
+
+---
+
+## 3. Funcionalidades MVP
+
+### Core:
+- [ ] Chat com IA local
+- [ ] Sugestão de código em tempo real
+- [ ] Explicação de código
+- [ ] Suporte a múltiplas linguagens
+- [ ] Histórico de conversas (localStorage)
+- [ ] Exportar código
+- [ ] Tema claro/escuro
+- [ ] Instalação PWA no iOS
+
+### Futuro (Fase 2):
+- [ ] Execução de código
+- [ ] Autenticação cloud
+- [ ] Sincronização
+- [ ] Mais modelos
+- [ ] Integração com apps do usuário
+
+---
+
+## 4. Tech Stack
+
+- HTML5 + CSS3 + Vanilla JS
+- Transformers.js (WASM) para IA local
+- Service Worker para offline
+- Web App Manifest para instalação PWA
+
+---
+
+## 5. Histórico de Versões
+
+| Versão | Data | Descrição |
+|--------|------|-----------|
+| 0.1 | 2026-02-21 | Draft inicial |
+| 0.2 | 2026-02-21 | Atualizado para Offline |
+| 0.3 | 2026-02-21 | Decisões finais definidas |
+| 0.4 | 2026-02-21 | MVP iniciado |
+
+---
+
+**Status:** Em Desenvolvimento
+**Última Atualização:** 2026-02-21
 
 ### 2.1 Autenticação & Conta
 - [ ] Você quer login/login social (Google, GitHub, email)?

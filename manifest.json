@@ -1,0 +1,25 @@
+{
+    "name": "OpenCode Mobile",
+    "short_name": "OpenCode",
+    "description": "Seu assistente de código com IA offline",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f1a",
+    "theme_color": "#1e1b4b",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b5cf6' rx='20' width='100' height='100'/><text y='.9em' x='50%' text-anchor='middle' font-size='60'>⚡</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "apple": {
+        "full_screen": true,
+        "status_bar_style": "black-translucent",
+        "webcapable": "yes"
+    },
+    "categories": ["productivity", "developer"],
+    "lang": "pt-BR"
+}

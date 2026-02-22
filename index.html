@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e1b4b">
+    <title>OpenCode Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">OpenCode</span>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggle" class="icon-btn" title="Alternar tema">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                    <button id="settingsBtn" class="icon-btn" title="Configurações">
+                        ⚙️
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Model Status Bar -->
+        <div id="modelStatus" class="model-status">
+            <div class="status-indicator"></div>
+            <span class="status-text">Carregando modelo...</span>
+        </div>
+
+        <!-- Chat Container -->
+        <main class="chat-container" id="chatContainer">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">⚡</div>
+                <h1>OpenCode Mobile</h1>
+                <p>Seu assistente de código com IA offline</p>
+                <div class="quick-actions">
+                    <button class="quick-btn" data-prompt="Explique o que é Python em 3 pontos">
+                        📚 O que é Python?
+                    </button>
+                    <button class="quick-btn" data-prompt="Crie uma função em JavaScript para validar email">
+                        💻 Validar Email
+                    </button>
+                    <button class="quick-btn" data-prompt="Me explique o que é uma API REST">
+                        🌐 O que é API REST?
+                    </button>
+                </div>
+            </div>
+            <div id="messagesContainer"></div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="userInput" 
+                    placeholder="Digite sua mensagem..." 
+                    rows="1"
+                    autocomplete="off"
+                ></textarea>
+                <button id="sendBtn" class="send-btn" disabled>
+                    <span>➤</span>
+                </button>
+            </div>
+            <p class="disclaimer">IA roda offline no seu dispositivo</p>
+        </footer>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Configurações</h2>
+                    <button class="close-btn" id="closeSettings">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>Modelo de IA</label>
+                        <select id="modelSelect">
+                            <option value="phi3">Phi-3 Mini (Recomendado)</option>
+                            <option value="gemma">Gemma 3n 2B</option>
+                            <option value="llama">Llama 3.2 1B</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Modo de Resposta</label>
+                        <select id="responseMode">
+                            <option value="balanced">Equilibrado</option>
+                            <option value="creative">Criativo</option>
+                            <option value="precise">Preciso</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="antigravityToggle">
+                            Usar Antigravity (requer internet)
+                        </label>
+                    </div>
+                    <div class="setting-group antigravity-key hidden" id="antigravityKeyGroup">
+                        <label>API Key Antigravity</label>
+                        <input type="password" id="antigravityKey" placeholder="Cole sua API key">
+                    </div>
+                    <div class="setting-group">
+                        <button id="clearHistory" class="danger-btn">🗑️ Limpar Histórico</button>
+                    </div>
+                    <div class="setting-group">
+                        <button id="downloadModel" class="secondary-btn">📥 Baixar Modelo Novamente</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p id="loadingText">Iniciando...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="loadingProgress"></div>
+                </div>
+                <p class="loading-hint">Primeiro download pode levar alguns minutos</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
