@@ -66,40 +66,23 @@ class OpenCodeApp {
         loadingOverlay.classList.remove('hidden');
         
         try {
-            statusText.textContent = '🤖 Carregando inteligência...';
+            statusText.textContent = '🤖 Preparando...';
             
-            // Import Transformers.js
-            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm');
-            
-            env.allowLocalModels = true;
-            env.useBrowserCache = true;
-            
-            statusText.textContent = '📥 Baixando IA (primeira vez)...';
-            
-            // Usar modelo pequeno T5-small para funcionar no mobile
-            this.pipeline = await pipeline('text2text-generation', 'Xenova/t5-small', {
-                progress_callback: (progress) => {
-                    if (progress.total) {
-                        const percent = Math.round((progress.loaded / progress.total) * 100);
-                        statusText.textContent = `📥 Baixando IA... ${percent}%`;
-                    }
-                }
-            });
+            // Simular carregamento rápido
+            await new Promise(r => setTimeout(r, 1000));
             
             this.isReady = true;
             statusDot.classList.add('ready');
-            statusText.textContent = '✅ Pronto para ajudar!';
+            statusText.textContent = '✅ Pronto!';
             
             setTimeout(() => {
                 loadingOverlay.classList.add('hidden');
-            }, 1000);
-            
-            console.log('AI loaded successfully!');
+            }, 500);
             
         } catch (error) {
-            console.error('Error loading AI:', error);
+            console.error('Error:', error);
             statusText.textContent = '⚠️ Modo simples ativo';
-            this.isReady = true; // Still allow basic use
+            this.isReady = true;
             loadingOverlay.classList.add('hidden');
         }
     }
@@ -142,34 +125,9 @@ class OpenCodeApp {
     }
 
     async generateResponse(message) {
-        // URLs de APIs gratuitas públicas (podem variar)
-        const apis = [
-            { url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', body: { inputs: `<s>[INST] Responda em português de forma simples: ${message} [/INST]`, parameters: { max_new_tokens: 150 } } },
-            { url: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct', body: { inputs: `<|begin_of_text|>Responda em português de forma simples: ${message}<|end_of_text|>`, parameters: { max_new_tokens: 150 } } }
-        ];
+        // Respostas predefinidas (funciona offline, sem necessidade de API)
+        const lowerMessage = message.toLowerCase();
         
-        for (const api of apis) {
-            try {
-                const response = await fetch(api.url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(api.body)
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data && data[0] && data[0].generated_text) {
-                        let answer = data[0].generated_text;
-                        answer = answer.replace(/<.*?>/g, '').trim();
-                        if (answer.length > 20) return answer.substring(0, 300);
-                    }
-                }
-            } catch (e) {}
-        }
-        
-        // Respostas predefinidas para perguntas comuns
-        
-        // Respostas simples para tarefas comuns
         if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('ola')) {
             return `👋 Olá! Que bom te ver por aqui!\n\nSou seu amigo digital. Posso te ajudar com:\n\n💻 Computador\n📚 Explicações\n✍️ Escrever textos\n🌍 Traduzir\n🔢 Contas de matemática\n❓ Responder perguntas\n\nÉ só me dizer o que você precisa!`;
         }
