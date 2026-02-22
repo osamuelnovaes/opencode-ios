@@ -8,7 +8,30 @@ class OpenCodeApp {
     }
 
     init() {
+        this.loadMessages();
         this.setupEventListeners();
+    }
+
+    loadMessages() {
+        const saved = localStorage.getItem('opencode-messages');
+        if (saved) {
+            try {
+                this.messages = JSON.parse(saved);
+                if (this.messages.length > 0) {
+                    document.getElementById('quickHelp').style.display = 'none';
+                    this.messages.forEach(msg => {
+                        this.addMessage(msg.content, msg.role);
+                    });
+                }
+            } catch (e) {
+                this.messages = [];
+            }
+        }
+    }
+
+    saveMessages() {
+        const toSave = this.messages.slice(-100);
+        localStorage.setItem('opencode-messages', JSON.stringify(toSave));
     }
 
     setupEventListeners() {
@@ -26,28 +49,6 @@ class OpenCodeApp {
             e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
             document.getElementById('sendBtn').disabled = !e.target.value.trim();
         });
-
-        document.querySelectorAll('.help-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const action = btn.dataset.action;
-                this.handleQuickAction(action);
-            });
-        });
-    }
-
-    handleQuickAction(action) {
-        const prompts = {
-            code: 'Me ajude com computador',
-            explain: 'Explique algo para mim',
-            write: 'Escreva um texto sobre',
-            translate: 'Traduza para português: ',
-            math: 'Quanto é',
-            answer: 'O que é'
-        };
-        
-        document.getElementById('userInput').value = prompts[action] || '';
-        document.getElementById('sendBtn').disabled = false;
-        document.getElementById('userInput').focus();
     }
 
     async sendMessage() {
@@ -63,6 +64,8 @@ class OpenCodeApp {
         document.getElementById('quickHelp').style.display = 'none';
         
         this.addMessage(message, 'user');
+        this.messages.push({ role: 'user', content: message });
+        this.saveMessages();
         
         const typingId = this.showTyping();
         
@@ -72,6 +75,8 @@ class OpenCodeApp {
             const response = await this.generateResponse(message);
             this.removeTyping(typingId);
             this.addMessage(response, 'ai');
+            this.messages.push({ role: 'assistant', content: response });
+            this.saveMessages();
         } catch (error) {
             console.error('Error:', error);
             this.removeTyping(typingId);
