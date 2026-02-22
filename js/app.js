@@ -71,37 +71,58 @@ class OpenCodeApp {
         this.isGenerating = true;
         
         try {
-            // Usar API de IA real - Llama 3 via Black Forest Labs (funciona!)
-            const response = await fetch('https://api.chatanywhere.com.cn/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+            // Usar API de IA real - múltiplas tentativas
+            const apis = [
+                {
+                    url: 'https://api.chatanywhere.com.cn/v1/chat/completions',
+                    body: {
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {role: 'system', content: 'Você é um assistente prestativo. Responda de forma clara e útil em português.'},
+                            {role: 'user', content: message}
+                        ],
+                        max_tokens: 400
+                    }
                 },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        {role: 'system', content: 'Você é um assistente amigável e prestativo. Responda de forma clara, simples e útil em português brasileiro. Seja sempre respeitoso e prestativo.'},
-                        ...this.messages
-                    ],
-                    max_tokens: 500,
-                    temperature: 0.7
-                })
-            });
+                {
+                    url: 'https://api.wlai.vip/v1/chat/completions',
+                    body: {
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {role: 'system', content: 'Você é um assistente prestativo. Responda de forma clara e útil em português.'},
+                            {role: 'user', content: message}
+                        ],
+                        max_tokens: 400
+                    }
+                }
+            ];
             
-            if (response.ok) {
-                const data = await response.json();
-                if (data.choices && data.choices[0]) {
-                    const aiResponse = data.choices[0].message.content;
-                    this.removeTyping(typingId);
-                    this.addMessage(aiResponse, 'assistant');
-                    this.messages.push({ role: 'assistant', content: aiResponse });
-                    this.saveMessages();
-                    this.isGenerating = false;
-                    return;
+            for (const api of apis) {
+                try {
+                    const response = await fetch(api.url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(api.body)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.choices && data.choices[0]) {
+                            const aiResponse = data.choices[0].message.content;
+                            this.removeTyping(typingId);
+                            this.addMessage(aiResponse, 'assistant');
+                            this.messages.push({ role: 'assistant', content: aiResponse });
+                            this.saveMessages();
+                            this.isGenerating = false;
+                            return;
+                        }
+                    }
+                } catch(e) {
+                    console.log('API attempt failed');
                 }
             }
             
-            throw new Error('API failed');
+            throw new Error('All APIs failed');
             
         } catch (error) {
             console.error('Error:', error);
