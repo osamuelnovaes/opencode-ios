@@ -142,7 +142,33 @@ class OpenCodeApp {
     }
 
     async generateResponse(message) {
-        const lowerMessage = message.toLowerCase();
+        // Usar API gratuita do HuggingFace - modelo que funciona sem key
+        try {
+            const response = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-small', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputs: `Responda em português de forma simples e amigável: ${message}`,
+                    parameters: {
+                        max_new_tokens: 200,
+                        temperature: 0.8
+                    }
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data[0] && data[0].generated_text) {
+                    return data[0].generated_text.trim();
+                }
+            }
+        } catch (e) {
+            console.log('API failed, trying fallback');
+        }
+        
+        // Fallback para respostas predefinidas
         
         // Respostas simples para tarefas comuns
         if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('ola')) {
