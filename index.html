@@ -7,143 +7,88 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e1b4b">
-    <title>OpenCode Mobile</title>
+    <title>OpenCode - Seu Amigo Digital</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <!-- Header -->
+        <!-- Header Simples -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-icon">⚡</span>
+                    <span class="logo-icon">🤖</span>
                     <span class="logo-text">OpenCode</span>
-                </div>
-                <div class="header-actions">
-                    <button id="themeToggle" class="icon-btn" title="Alternar tema">
-                        <span id="themeIcon">🌙</span>
-                    </button>
-                    <button id="settingsBtn" class="icon-btn" title="Configurações">
-                        ⚙️
-                    </button>
                 </div>
             </div>
         </header>
 
-        <!-- Model Status Bar -->
-        <div id="modelStatus" class="model-status">
-            <div class="status-indicator"></div>
-            <span class="status-text">Iniciando...</span>
+        <!-- Status da IA -->
+        <div id="aiStatus" class="ai-status">
+            <div class="status-dot"></div>
+            <span class="status-text">Preparando sua ajuda...</span>
         </div>
 
-        <!-- Mode Tabs -->
-        <div class="mode-tabs">
-            <button class="mode-tab active" data-mode="local">
-                📱 Offline
-            </button>
-            <button class="mode-tab" data-mode="openrouter">
-                🌐 OpenRouter
-            </button>
-            <button class="mode-tab" data-mode="antigravity">
-                ⚡ Antigravity
-            </button>
-        </div>
-
-        <!-- Chat Container -->
-        <main class="chat-container" id="chatContainer">
-            <div class="welcome-screen" id="welcomeScreen">
-                <div class="welcome-icon">⚡</div>
-                <h1>OpenCode Mobile</h1>
-                <p>Seu assistente de código com IA offline</p>
-                <div class="quick-actions">
-                    <button class="quick-btn" data-prompt="Explique o que é Python em 3 pontos">
-                        📚 O que é Python?
-                    </button>
-                    <button class="quick-btn" data-prompt="Crie uma função em JavaScript para validar email">
-                        💻 Validar Email
-                    </button>
-                    <button class="quick-btn" data-prompt="Me explique o que é uma API REST">
-                        🌐 O que é API REST?
-                    </button>
-                </div>
+        <!-- Área de B Ajuda Rápida -->
+        <div class="quick-help" id="quickHelp">
+            <h2>👋 Olá! Sou seu amigo digital!</h2>
+            <p>Posso te ajudar com muitas coisas. Escolha abaixo ou me mande uma mensagem:</p>
+            
+            <div class="help-grid">
+                <button class="help-btn" data-action="code">
+                    <span class="help-icon">💻</span>
+                    <span class="help-text">Me ajude com computador</span>
+                </button>
+                <button class="help-btn" data-action="explain">
+                    <span class="help-icon">📚</span>
+                    <span class="help-text">Explique algo</span>
+                </button>
+                <button class="help-btn" data-action="write">
+                    <span class="help-icon">✍️</span>
+                    <span class="help-text">Escrever texto</span>
+                </button>
+                <button class="help-btn" data-action="translate">
+                    <span class="help-icon">🌍</span>
+                    <span class="help-text">Traduzir</span>
+                </button>
+                <button class="help-btn" data-action="math">
+                    <span class="help-icon">🔢</span>
+                    <span class="help-text">Contas de matemática</span>
+                </button>
+                <button class="help-btn" data-action="answer">
+                    <span class="help-icon">❓</span>
+                    <span class="help-text">Responder perguntas</span>
+                </button>
             </div>
+        </div>
+
+        <!-- Chat -->
+        <main class="chat-container" id="chatContainer">
             <div id="messagesContainer"></div>
         </main>
 
-        <!-- Input Area -->
+        <!-- Input Simples -->
         <footer class="input-area">
             <div class="input-wrapper">
                 <textarea 
                     id="userInput" 
-                    placeholder="Digite sua mensagem..." 
+                    placeholder="Digite sua mensagem aqui..." 
                     rows="1"
-                    autocomplete="off"
                 ></textarea>
                 <button id="sendBtn" class="send-btn" disabled>
                     <span>➤</span>
                 </button>
             </div>
-            <p class="disclaimer">IA roda offline no seu dispositivo</p>
         </footer>
 
-        <!-- Settings Modal -->
-        <div id="settingsModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Configurações</h2>
-                    <button class="close-btn" id="closeSettings">✕</button>
-                </div>
-                <div class="modal-body">
-                    <div class="setting-group">
-                        <label>Selecionar Modelo (OpenRouter Free)</label>
-                        <select id="modelSelect">
-                        </select>
-                        <small style="color: var(--text-muted)">Todos os modelos são gratuitos!</small>
-                    </div>
-                    
-                    <div class="setting-group" id="openrouterSettings">
-                        <label>API Key OpenRouter</label>
-                        <input type="password" id="openrouterKey" placeholder="Cole sua API key do OpenRouter">
-                        <small style="color: var(--text-muted)">
-                            <a href="https://openrouter.ai/settings" target="_blank" style="color: var(--accent-primary)">Obter chave grátis</a>
-                        </small>
-                    </div>
-                    
-                    <div class="setting-group" id="antigravitySettings">
-                        <label>
-                            <input type="checkbox" id="antigravityToggle">
-                            Usar Antigravity
-                        </label>
-                        <input type="password" id="antigravityKey" placeholder="Cole sua API key Antigravity">
-                    </div>
-                    
-                    <div class="setting-group">
-                        <button id="clearHistory" class="danger-btn">🗑️ Limpar Histórico</button>
-                    </div>
-                    
-                    <div class="setting-group" id="localSettings">
-                        <p style="color: var(--text-muted); font-size: 13px;">
-                            📱 Modo Offline usa Transformers.js (modelo leve no navegador)<br>
-                            🌐 OpenRouter requer API key (modelos poderosos gratuitos)<br>
-                            ⚡ Antigravity requer API key
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading Overlay -->
+        <!-- Loading -->
         <div id="loadingOverlay" class="loading-overlay hidden">
             <div class="loader">
                 <div class="spinner"></div>
-                <p id="loadingText">Iniciando...</p>
-                <div class="progress-bar">
-                    <div class="progress" id="loadingProgress"></div>
-                </div>
-                <p class="loading-hint">Primeiro download pode levar alguns minutos</p>
+                <p id="loadingText">Preparing your help...</p>
             </div>
         </div>
     </div>

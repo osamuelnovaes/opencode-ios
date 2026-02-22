@@ -1,55 +1,25 @@
-// OpenCode Mobile - Main App
-
-// OpenRouter Models (Free)
-const OPENROUTER_MODELS = [
-    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1', params: '671B', context: '164K', desc: 'Excelente reasoning' },
-    { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large', params: '400B', context: '131K', desc: 'Muito potente' },
-    { id: 'qwen/qwen3-next-80b-a3b-instruct:free', name: 'Qwen3 Next 80B', params: '80B', context: '262K', desc: 'Maior contexto' },
-    { id: 'nvidia/nemotron-3-nano-30b-a3b:free', name: 'Nemotron 30B', params: '30B', context: '256K', desc: 'NVIDIA' },
-    { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', params: '27B', context: '131K', desc: 'Google' },
-    { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', params: '70B', context: '128K', desc: 'Meta' },
-    { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral 3.1 24B', params: '24B', context: '128K', desc: 'Multimodal' },
-    { id: 'stepfun/step-3.5-flash:free', name: 'Step 3.5 Flash', params: '196B', context: '256K', desc: 'StepFun' },
-    { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', params: '480B', context: '262K', desc: 'Especialista em código' },
-    { id: 'liquid/lfm-2.5-1.2b-thinking:free', name: 'LFM Thinking', params: '1.2B', context: '32K', desc: 'Leve e rápido' }
-];
+// OpenCode Mobile - IA Embutida
 
 class OpenCodeApp {
     constructor() {
         this.messages = [];
-        this.model = null;
-        this.modelLoaded = false;
+        this.pipeline = null;
+        this.isReady = false;
         this.isGenerating = false;
-        this.currentMode = localStorage.getItem('currentMode') || 'local'; // local, openrouter, antigravity
-        this.settings = {
-            theme: localStorage.getItem('theme') || 'dark',
-            model: localStorage.getItem('model') || 'deepseek/deepseek-r1:free',
-            openrouterKey: localStorage.getItem('openrouterKey') || '',
-            useAntigravity: localStorage.getItem('useAntigravity') === 'true',
-            antigravityKey: localStorage.getItem('antigravityKey') || ''
-        };
         
         this.init();
     }
 
     async init() {
-        this.loadMessages();
         this.setupEventListeners();
-        this.applyTheme();
-        await this.loadModel();
-        this.updateModelStatus();
+        await this.loadAI();
     }
 
     setupEventListeners() {
-        // Mode tabs
-        document.querySelectorAll('.mode-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchMode(tab.dataset.mode));
-        });
-
-        // Send button
+        // Botão enviar
         document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
         
-        // Enter to send
+        // Enter para enviar
         document.getElementById('userInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -60,148 +30,77 @@ class OpenCodeApp {
         // Auto-resize textarea
         document.getElementById('userInput').addEventListener('input', (e) => {
             e.target.style.height = 'auto';
-            e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-            this.updateSendButton();
+            e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+            document.getElementById('sendBtn').disabled = !e.target.value.trim();
         });
 
-        // Theme toggle
-        document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
-
-        // Settings
-        document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
-        document.getElementById('closeSettings').addEventListener('click', () => this.closeSettings());
-        
-        // Model select
-        document.getElementById('modelSelect').addEventListener('change', (e) => {
-            this.settings.model = e.target.value;
-            localStorage.setItem('model', e.target.value);
-        });
-
-        // OpenRouter key
-        document.getElementById('openrouterKey').addEventListener('input', (e) => {
-            this.settings.openrouterKey = e.target.value;
-            localStorage.setItem('openrouterKey', e.target.value);
-        });
-
-        // Antigravity toggle
-        document.getElementById('antigravityToggle').addEventListener('change', (e) => {
-            this.settings.useAntigravity = e.target.checked;
-            localStorage.setItem('useAntigravity', e.target.checked);
-            document.getElementById('antigravityKeyGroup').classList.toggle('hidden', !e.target.checked);
-        });
-
-        // Antigravity key
-        document.getElementById('antigravityKey').addEventListener('input', (e) => {
-            this.settings.antigravityKey = e.target.value;
-            localStorage.setItem('antigravityKey', e.target.value);
-        });
-
-        // Clear history
-        document.getElementById('clearHistory').addEventListener('click', () => this.clearHistory());
-
-        // Download model
-        document.getElementById('downloadModel').addEventListener('click', () => this.downloadModel());
-
-        // Quick actions
-        document.querySelectorAll('.quick-btn').forEach(btn => {
+        // Botões de ajuda rápida
+        document.querySelectorAll('.help-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const prompt = btn.dataset.prompt;
-                document.getElementById('userInput').value = prompt;
-                this.updateSendButton();
+                const action = btn.dataset.action;
+                this.handleQuickAction(action);
             });
         });
-
-        // Close modal on outside click
-        document.getElementById('settingsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'settingsModal') this.closeSettings();
-        });
     }
 
-    switchMode(mode) {
-        this.currentMode = mode;
-        localStorage.setItem('currentMode', mode);
+    handleQuickAction(action) {
+        const prompts = {
+            code: 'Me ajude com computador. Como fazer...',
+            explain: 'Explique de forma simples o que é...',
+            write: 'Escreva um texto sobre...',
+            translate: 'Traduza para o português: ',
+            math: 'Calcule e explique de forma simples: ',
+            answer: 'Responda de forma simples: '
+        };
         
-        document.querySelectorAll('.mode-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.mode === mode);
-        });
-
-        document.getElementById('openrouterSettings').classList.toggle('hidden', mode !== 'openrouter');
-        document.getElementById('antigravitySettings').classList.toggle('hidden', mode !== 'antigravity');
-        
-        this.updateModelStatus();
+        document.getElementById('userInput').value = prompts[action];
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('userInput').focus();
     }
 
-    updateSendButton() {
-        const input = document.getElementById('userInput');
-        const btn = document.getElementById('sendBtn');
-        btn.disabled = !input.value.trim() || this.isGenerating;
-    }
-
-    applyTheme() {
-        document.documentElement.setAttribute('data-theme', this.settings.theme);
-        document.getElementById('themeIcon').textContent = this.settings.theme === 'dark' ? '🌙' : '☀️';
-    }
-
-    toggleTheme() {
-        this.settings.theme = this.settings.theme === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', this.settings.theme);
-        this.applyTheme();
-    }
-
-    openSettings() {
-        document.getElementById('settingsModal').classList.remove('hidden');
-        
-        // Populate OpenRouter models
-        const modelSelect = document.getElementById('modelSelect');
-        modelSelect.innerHTML = OPENROUTER_MODELS.map(m => 
-            `<option value="${m.id}">${m.name} (${m.params})</option>`
-        ).join('');
-        
-        modelSelect.value = this.settings.model;
-        document.getElementById('openrouterKey').value = this.settings.openrouterKey;
-        document.getElementById('antigravityToggle').checked = this.settings.useAntigravity;
-        document.getElementById('antigravityKey').value = this.settings.antigravityKey;
-        document.getElementById('antigravityKeyGroup').classList.toggle('hidden', !this.settings.useAntigravity);
-        
-        // Set current mode
-        document.querySelectorAll('.mode-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.mode === this.currentMode);
-        });
-        document.getElementById('openrouterSettings').classList.toggle('hidden', this.currentMode !== 'openrouter');
-        document.getElementById('antigravitySettings').classList.toggle('hidden', this.currentMode !== 'antigravity');
-    }
-
-    closeSettings() {
-        document.getElementById('settingsModal').classList.add('hidden');
-    }
-
-    async loadModel() {
+    async loadAI() {
+        const statusDot = document.querySelector('.status-dot');
+        const statusText = document.querySelector('.status-text');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const loadingText = document.getElementById('loadingText');
-
-        loadingOverlay.classList.add('hidden');
-        this.modelLoaded = true;
-        this.updateModelStatus();
-    }
-
-    updateModelStatus() {
-        const statusEl = document.getElementById('modelStatus');
-        const statusText = statusEl.querySelector('.status-text');
-        const indicator = statusEl.querySelector('.status-indicator');
-
-        if (this.currentMode === 'openrouter' && this.settings.openrouterKey) {
-            const modelInfo = OPENROUTER_MODELS.find(m => m.id === this.settings.model);
-            statusText.textContent = `OpenRouter: ${modelInfo?.name || 'Modelo'}`;
-            indicator.classList.add('ready');
-        } else if (this.currentMode === 'antigravity' && this.settings.antigravityKey) {
-            statusText.textContent = 'Antigravity Online';
-            indicator.classList.add('ready');
-        } else if (this.modelLoaded) {
-            statusText.textContent = 'Modelo Local Pronto';
-            indicator.classList.add('ready');
-        } else {
-            statusText.textContent = 'Modo Offline - Use API Key';
-            indicator.classList.remove('ready');
+        
+        loadingOverlay.classList.remove('hidden');
+        
+        try {
+            statusText.textContent = '🤖 Carregando inteligência...';
+            
+            // Import Transformers.js
+            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm');
+            
+            env.allowLocalModels = true;
+            env.useBrowserCache = true;
+            
+            statusText.textContent = '📥 Baixando IA (primeira vez)...';
+            
+            // Usar modelo pequeno T5-small para funcionar no mobile
+            this.pipeline = await pipeline('text2text-generation', 'Xenova/t5-small', {
+                progress_callback: (progress) => {
+                    if (progress.total) {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        statusText.textContent = `📥 Baixando IA... ${percent}%`;
+                    }
+                }
+            });
+            
+            this.isReady = true;
+            statusDot.classList.add('ready');
+            statusText.textContent = '✅ Pronto para ajudar!';
+            
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+            }, 1000);
+            
+            console.log('AI loaded successfully!');
+            
+        } catch (error) {
+            console.error('Error loading AI:', error);
+            statusText.textContent = '⚠️ Modo simples ativo';
+            this.isReady = true; // Still allow basic use
+            loadingOverlay.classList.add('hidden');
         }
     }
 
@@ -210,221 +109,161 @@ class OpenCodeApp {
         const message = input.value.trim();
         
         if (!message || this.isGenerating) return;
-
-        // Route to appropriate service
-        if (this.currentMode === 'openrouter' && this.settings.openrouterKey) {
-            await this.sendToOpenRouter(message);
-        } else if (this.currentMode === 'antigravity' && this.settings.useAntigravity && this.settings.antigravityKey) {
-            await this.sendToAntigravity(message);
-        } else {
-            await this.sendToLocalModel(message);
-        }
-    }
-
-    async sendToOpenRouter(message) {
-        const input = document.getElementById('userInput');
-        input.value = '';
-        this.updateSendButton();
-
-        document.getElementById('welcomeScreen').style.display = 'none';
         
+        input.value = '';
+        input.style.height = 'auto';
+        document.getElementById('sendBtn').disabled = true;
+        
+        // Esconder ajuda rápida
+        document.getElementById('quickHelp').style.display = 'none';
+        
+        // Adicionar mensagem do usuário
         this.addMessage(message, 'user');
-        this.messages.push({ role: 'user', content: message });
-        this.saveMessages();
-
+        
+        // Mostrar que está pensando
         const typingId = this.showTyping();
+        
         this.isGenerating = true;
-        this.updateSendButton();
-
+        
         try {
-            const modelInfo = OPENROUTER_MODELS.find(m => m.id === this.settings.model) || OPENROUTER_MODELS[0];
+            // Gerar resposta
+            const response = await this.generateResponse(message);
             
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.settings.openrouterKey}`,
-                    'HTTP-Referer': 'https://osamuelnovaes.github.io/opencode-ios',
-                    'X-Title': 'OpenCode Mobile'
-                },
-                body: JSON.stringify({
-                    model: this.settings.model,
-                    messages: this.messages,
-                    max_tokens: 8192
-                })
-            });
+            this.removeTyping(typingId);
+            this.addMessage(response, 'ai');
+            
+        } catch (error) {
+            console.error('Error:', error);
+            this.removeTyping(typingId);
+            this.addMessage('Desculpe, tive um problema. Tente novamente!', 'ai');
+        }
+        
+        this.isGenerating = false;
+    }
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'API error');
+    async generateResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Respostas simples para tarefas comuns
+        if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('ola')) {
+            return `👋 Olá! Que bom te ver por aqui!\n\nSou seu amigo digital. Posso te ajudar com:\n\n💻 Computador\n📚 Explicações\n✍️ Escrever textos\n🌍 Traduzir\n🔢 Contas de matemática\n❓ Responder perguntas\n\nÉ só me dizer o que você precisa!`;
+        }
+        
+        if (lowerMessage.includes('computador') || lowerMessage.includes('pc') || lowerMessage.includes('laptop')) {
+            return `💻 Com prazer!\n\nMe diga o que você quer fazer:\n\n• Como usar a internet\n• Como mandar mensagem\n• Como fazer uma videochamada\n• Como tirar foto\n• Como ouvir música\n• Problemas com o computador\n\nO que você precisa?`;
+        }
+        
+        if (lowerMessage.includes('internet') || lowerMessage.includes('wifi')) {
+            return `🌐 Vamos resolver isso!\n\n1. Verifique se o WiFi está ligado\n2.看看 se outras pessoas têm internet\n3. Desligue e religue o roteador\n\nSe não resolver, me explique o que acontece quando você tenta acessar a internet.`;
+        }
+        
+        if (lowerMessage.includes('whatsapp') || lowerMessage.includes('mensagem')) {
+            return `💬 WhatsApp é fácil!\n\n📱 Para mandar mensagem:\n1. Abra o WhatsApp\n2. Toque no ícone de nova mensagem\n3. Escolha o contato\n4. Digite e toque em enviar\n\nQuer que eu explique outra coisa?`;
+        }
+        
+        if (lowerMessage.includes('videochamada') || lowerMessage.includes('ligação')) {
+            return `📹 Para fazer videochamada:\n\n1. Abra o WhatsApp\n2. Escolha o contato\n3. Toque no ícone de câmera\n\nSe for pelo Zoom/Google Meet:\n1. Abra o app\n2. Toque em "Nova Reunão" ou "Entrar"\n3. Compartilhe o link com a pessoa\n\nQuer mais alguma ajuda?`;
+        }
+        
+        if (lowerMessage.includes('foto') || lowerMessage.includes('câmera')) {
+            return `📷 Para tirar foto:\n\n1. Abra o app "Câmera"\n2. Aponte para o que quer fotografar\n3. Toque no botão grande\n\nPara ver a foto depois:\n1. Abra o app "Fotos"\n2. Procure a imagem\n\nQuer aprender mais?`;
+        }
+        
+        if (lowerMessage.includes('música') || lowerMessage.includes('spotify')) {
+            return `🎵 Para ouvir música:\n\n**Spotify:**\n1. Abra o app\n2. Procure a música\n3. Toque para tocar\n\n**YouTube:**\n1. Abra o YouTube\n2. Busque a música\n3. Toque no vídeo\n\nPrecisa de mais alguma coisa?`;
+        }
+        
+        if (lowerMessage.includes('matemática') || lowerMessage.includes('conta') || lowerMessage.includes('soma') || lowerMessage.includes('vezes')) {
+            // Extrair números da mensagem
+            const numbers = message.match(/\d+/g);
+            if (numbers && numbers.length >= 2) {
+                const n1 = parseInt(numbers[0]);
+                const n2 = parseInt(numbers[1]);
+                if (lowerMessage.includes('soma') || lowerMessage.includes('mais') || lowerMessage.includes('+')) {
+                    return `🔢 Vamos fazer a conta!\n\n${n1} + ${n2} = ${n1 + n2}\n\nFácil, né? Quer outra conta?`;
+                }
+                if (lowerMessage.includes('vezes') || lowerMessage.includes('multiplic') || lowerMessage.includes('x')) {
+                    return `🔢 Vamos fazer a conta!\n\n${n1} × ${n2} = ${n1 * n2}\n\nFácil, né? Quer outra conta?`;
+                }
+                if (lowerMessage.includes('menos') || lowerMessage.includes('-')) {
+                    return `🔢 Vamos fazer a conta!\n\n${n1} - ${n2} = ${n1 - n2}\n\nFácil, né? Quer outra conta?`;
+                }
             }
-
-            const data = await response.json();
-            const assistantMessage = data.choices[0].message.content;
-
-            this.removeTyping(typingId);
-            this.addMessage(assistantMessage, 'ai');
-            this.messages.push({ role: 'assistant', content: assistantMessage });
-            this.saveMessages();
-
-        } catch (error) {
-            console.error('OpenRouter error:', error);
-            this.removeTyping(typingId);
-            this.addMessage(`Erro: ${error.message}`, 'ai');
+            return `🔢 Me diga a conta!\n\nPor exemplo: "quanto é 5 mais 3" ou "quanto é 10 vezes 4"\n\nEu calculo e explico passo a passo!`;
         }
-
-        this.isGenerating = false;
-        this.updateSendButton();
-    }
-
-    async sendToLocalModel(message) {
-        const input = document.getElementById('userInput');
         
-        // Show message that offline mode needs API
-        this.addMessage(message, 'user');
-        this.messages.push({ role: 'user', content: message });
-        this.saveMessages();
-        
-        this.addMessage(
-            'Para usar a IA, por favor configure uma API Key:\n\n' +
-            '🌐 **OpenRouter** (Recomendado - Modelos gratuitos):\n' +
-            '1. Acesse https://openrouter.ai\n' +
-            '2. Crie uma conta gratuita\n' +
-            '3. Vá em Settings > API Keys\n' +
-            '4. Copie sua chave\n' +
-            '5. Volte aqui > Configurações > Cole a chave\n\n' +
-            'Selecione "OpenRouter" na aba acima para usar.',
-            'ai'
-        );
-        this.messages.push({ role: 'assistant', content: 'Modo offline requer API Key' });
-        this.saveMessages();
-        
-        document.getElementById('welcomeScreen').style.display = 'none';
-    }
-
-    async sendToAntigravity(message) {
-        const input = document.getElementById('userInput');
-        input.value = '';
-        this.updateSendButton();
-
-        document.getElementById('welcomeScreen').style.display = 'none';
-        
-        this.addMessage(message, 'user');
-        this.messages.push({ role: 'user', content: message });
-        this.saveMessages();
-
-        const typingId = this.showTyping();
-        this.isGenerating = true;
-        this.updateSendButton();
-
-        try {
-            const response = await fetch('https://antigravity.sh/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.settings.antigravityKey}`
-                },
-                body: JSON.stringify({
-                    model: 'gemini-3-flash',
-                    messages: this.messages,
-                    max_tokens: 4096
-                })
-            });
-
-            if (!response.ok) throw new Error('API error');
-
-            const data = await response.json();
-            const assistantMessage = data.choices[0].message.content;
-
-            this.removeTyping(typingId);
-            this.addMessage(assistantMessage, 'ai');
-            this.messages.push({ role: 'ai', content: assistantMessage });
-            this.saveMessages();
-
-        } catch (error) {
-            console.error('Antigravity error:', error);
-            this.removeTyping(typingId);
-            this.addMessage('Erro ao conectar com Antigravity. Verifique sua API key e conexão.', 'ai');
+        if (lowerMessage.includes('traduz')) {
+            return `🌍 Para traduzir:\n\n1. Abra o Google Tradutor\n2. Digite ou cole o texto\n3. Escolha o idioma\n4. Veja a tradução\n\nQuer que eu traduza algo agora? É só me mandar o texto!`;
         }
-
-        this.isGenerating = false;
-        this.updateSendButton();
-    }
-
-    formatPrompt(message) {
-        const modeInstructions = {
-            balanced: '',
-            creative: 'Be creative and innovative in your solutions.',
-            precise: 'Be precise and detailed in your explanations.'
-        };
-
-        return `You are a helpful coding assistant. ${modeInstructions[this.settings.responseMode]}\n\nUser: ${message}\n\nAssistant:`;
-    }
-
-    getTemperature() {
-        const temps = { balanced: 0.7, creative: 0.9, precise: 0.3 };
-        return temps[this.settings.responseMode] || 0.7;
+        
+        // Se tem o pipeline, usa ele
+        if (this.pipeline) {
+            try {
+                // Formatar prompt para respostas simples
+                const prompt = `Responda de forma simples e amigável em português: ${message}`;
+                
+                const result = await this.pipeline(prompt, {
+                    max_new_tokens: 150,
+                    temperature: 0.7,
+                    do_sample: true
+                });
+                
+                let response = result[0].generated_text;
+                
+                // Limpar resposta
+                if (response.includes('Responda de forma simples')) {
+                    response = response.split('Responda de forma simples')[1] || response;
+                }
+                
+                return response.substring(0, 500);
+                
+            } catch (e) {
+                // Fallback para respostas predefinidas
+            }
+        }
+        
+        // Resposta genérica amigável
+        return `🤖 Entendi! "${message}"\n\nDesculpe, às vezes tenho dificuldade de entender. Tente me dizer de outra forma!\n\nPosso te ajudar com:\n\n💻 Problemas de computador\n📱 Como usar apps\n🌍 Internet e WiFi\n📷 Fotos e vídeos\n🎵 Músicas\n🔢 Contas de matemática\n❓ Perguntas em geral\n\nO que você precisa?`;
     }
 
     addMessage(content, role) {
         const container = document.getElementById('messagesContainer');
         
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${role}`;
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
         
-        const avatar = role === 'user' ? '👤' : '⚡';
+        const avatar = role === 'user' ? '👤' : '🤖';
         
-        // Process content for code blocks
-        const formattedContent = this.formatContent(content);
+        // Formatar quebras de linha
+        const formatted = content.replace(/\n/g, '<br>');
         
-        messageDiv.innerHTML = `
+        div.innerHTML = `
             <div class="message-avatar">${avatar}</div>
-            <div class="message-content">${formattedContent}</div>
+            <div class="message-content">${formatted}</div>
         `;
         
-        container.appendChild(messageDiv);
+        container.appendChild(div);
         
-        // Scroll to bottom
-        const chatContainer = document.getElementById('chatContainer');
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    formatContent(content) {
-        // Escape HTML
-        let formatted = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        
-        // Convert code blocks
-        formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-        
-        // Convert inline code
-        formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
-        // Convert line breaks
-        formatted = formatted.split('\n').map(p => `<p>${p}</p>`).join('');
-        
-        return formatted;
+        // Scroll para baixo
+        document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
     }
 
     showTyping() {
         const container = document.getElementById('messagesContainer');
         const id = 'typing-' + Date.now();
         
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message ai';
-        typingDiv.id = id;
-        typingDiv.innerHTML = `
-            <div class="message-avatar">⚡</div>
+        const div = document.createElement('div');
+        div.className = 'message ai';
+        div.id = id;
+        div.innerHTML = `
+            <div class="message-avatar">🤖</div>
             <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </div>
         `;
         
-        container.appendChild(typingDiv);
-        
-        const chatContainer = document.getElementById('chatContainer');
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        container.appendChild(div);
+        document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
         
         return id;
     }
@@ -433,48 +272,14 @@ class OpenCodeApp {
         const el = document.getElementById(id);
         if (el) el.remove();
     }
-
-    loadMessages() {
-        const saved = localStorage.getItem('opencode-messages');
-        if (saved) {
-            try {
-                this.messages = JSON.parse(saved);
-                document.getElementById('welcomeScreen').style.display = 'none';
-                
-                this.messages.forEach(msg => {
-                    this.addMessage(msg.content, msg.role);
-                });
-            } catch (e) {
-                this.messages = [];
-            }
-        }
-    }
-
-    saveMessages() {
-        // Keep only last 50 messages
-        const toSave = this.messages.slice(-50);
-        localStorage.setItem('opencode-messages', JSON.stringify(toSave));
-    }
-
-    clearHistory() {
-        if (confirm('Tem certeza que deseja limpar o histórico?')) {
-            this.messages = [];
-            localStorage.removeItem('opencode-messages');
-            document.getElementById('messagesContainer').innerHTML = '';
-            document.getElementById('welcomeScreen').style.display = 'block';
-            this.closeSettings();
-        }
-    }
 }
 
-// Initialize app when DOM is ready
+// Iniciar app
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new OpenCodeApp();
 });
 
-// Register service worker for PWA
+// Service Worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(err => {
-        console.log('SW registration failed:', err);
-    });
+    navigator.serviceWorker.register('sw.js').catch(() => {});
 }
