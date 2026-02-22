@@ -178,95 +178,10 @@ class OpenCodeApp {
     async loadModel() {
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
-        const loadingProgress = document.getElementById('loadingProgress');
 
-        loadingOverlay.classList.remove('hidden');
-        loadingText.textContent = 'Verificando modelo...';
-
-        try {
-            // Check if model is cached
-            loadingProgress.style.width = '20%';
-            loadingText.textContent = 'Carregando Transformers.js...';
-
-            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm');
-            
-            // Use WASM backend for better mobile support
-            env.allowLocalModels = true;
-            env.useBrowserCache = true;
-
-            loadingProgress.style.width = '40%';
-            loadingText.textContent = 'Baixando modelo de IA...';
-
-            // For now, use a lighter model
-            // In production, you'd use phi3-mini or gemma-2b
-            // Using text2text-generation for coding assistance
-            this.pipeline = await pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-783M', {
-                progress_callback: (progress) => {
-                    if (progress.total) {
-                        const percent = 40 + (progress.loaded / progress.total) * 50;
-                        loadingProgress.style.width = percent + '%';
-                        loadingText.textContent = `Baixando... ${Math.round(percent)}%`;
-                    }
-                }
-            });
-
-            this.modelLoaded = true;
-            loadingProgress.style.width = '100%';
-            loadingText.textContent = 'Modelo pronto!';
-            
-            setTimeout(() => {
-                loadingOverlay.classList.add('hidden');
-            }, 500);
-
-            console.log('Model loaded successfully');
-
-        } catch (error) {
-            console.error('Error loading model:', error);
-            loadingText.textContent = 'Erro ao carregar modelo';
-            loadingText.style.color = '#ef4444';
-            
-            // Try fallback after 3 seconds
-            setTimeout(() => {
-                this.loadFallback();
-            }, 3000);
-        }
-    }
-
-    async loadFallback() {
-        const loadingText = document.getElementById('loadingText');
-        
-        try {
-            loadingText.textContent = 'Tentando modelo alternativo...';
-            
-            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm');
-            env.allowLocalModels = true;
-            env.useBrowserCache = true;
-
-            this.pipeline = await pipeline('text2text-generation', 'Xenova/t5-small', {});
-            this.modelLoaded = true;
-            
-            document.getElementById('loadingOverlay').classList.add('hidden');
-            console.log('Fallback model loaded');
-            
-        } catch (error) {
-            console.error('Fallback also failed:', error);
-            loadingText.textContent = 'Use a versão online quando conectado à internet';
-            
-            // Allow using online mode
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }, 2000);
-        }
-    }
-
-    async downloadModel() {
-        if (this.modelLoaded) {
-            alert('Modelo já está disponível!');
-            return;
-        }
-        
-        localStorage.removeItem('transformers-cache');
-        await this.loadModel();
+        loadingOverlay.classList.add('hidden');
+        this.modelLoaded = true;
+        this.updateModelStatus();
     }
 
     updateModelStatus() {
@@ -364,47 +279,27 @@ class OpenCodeApp {
 
     async sendToLocalModel(message) {
         const input = document.getElementById('userInput');
-        input.value = '';
-        this.updateSendButton();
-
-        // Hide welcome screen
-        document.getElementById('welcomeScreen').style.display = 'none';
-
-        // Add user message
+        
+        // Show message that offline mode needs API
         this.addMessage(message, 'user');
         this.messages.push({ role: 'user', content: message });
         this.saveMessages();
-
-        // Show typing indicator
-        const typingId = this.showTyping();
-
-        this.isGenerating = true;
-        this.updateSendButton();
-
-        try {
-            // Format prompt for code assistance
-            const prompt = this.formatPrompt(message);
-            
-            const result = await this.pipeline(prompt, {
-                max_new_tokens: 512,
-                temperature: this.getTemperature(),
-                do_sample: true
-            });
-
-            const response = result[0].generated_text;
-            this.removeTyping(typingId);
-            this.addMessage(response, 'ai');
-            this.messages.push({ role: 'ai', content: response });
-            this.saveMessages();
-
-        } catch (error) {
-            console.error('Generation error:', error);
-            this.removeTyping(typingId);
-            this.addMessage('Desculpe, houve um erro ao processar sua solicitação. Tente novamente.', 'ai');
-        }
-
-        this.isGenerating = false;
-        this.updateSendButton();
+        
+        this.addMessage(
+            'Para usar a IA, por favor configure uma API Key:\n\n' +
+            '🌐 **OpenRouter** (Recomendado - Modelos gratuitos):\n' +
+            '1. Acesse https://openrouter.ai\n' +
+            '2. Crie uma conta gratuita\n' +
+            '3. Vá em Settings > API Keys\n' +
+            '4. Copie sua chave\n' +
+            '5. Volte aqui > Configurações > Cole a chave\n\n' +
+            'Selecione "OpenRouter" na aba acima para usar.',
+            'ai'
+        );
+        this.messages.push({ role: 'assistant', content: 'Modo offline requer API Key' });
+        this.saveMessages();
+        
+        document.getElementById('welcomeScreen').style.display = 'none';
     }
 
     async sendToAntigravity(message) {
