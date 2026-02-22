@@ -125,12 +125,28 @@ class OpenCodeApp {
     }
 
     async generateResponse(message) {
-        // Respostas predefinidas (funciona offline, sem necessidade de API)
-        const lowerMessage = message.toLowerCase();
+        // Simple responses that always work
+        const text = message.toLowerCase();
         
-        if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('ola')) {
-            return `👋 Olá! Que bom te ver por aqui!\n\nSou seu amigo digital. Posso te ajudar com:\n\n💻 Computador\n📚 Explicações\n✍️ Escrever textos\n🌍 Traduzir\n🔢 Contas de matemática\n❓ Responder perguntas\n\nÉ só me dizer o que você precisa!`;
+        if (text.includes('whatsapp') || text.includes('mensagem')) {
+            return "💬 WhatsApp é fácil!\n\n1. Abra o WhatsApp\n2. Toque em nova mensagem\n3. Escolha o contato\n4. Digite e envie\n\nQuer mais ajuda?";
         }
+        
+        if (text.includes('oi') || text.includes('ola') || text.includes('olá')) {
+            return "👋 Olá! Que bom te ver!\n\nSou seu amigo digital. Posso ajudar com:\n\n💻 Computador\n📱 Apps\n🌐 Internet\n📷 Fotos\n🎵 Músicas\n\nO que você precisa?";
+        }
+        
+        if (text.includes('internet') || text.includes('wifi')) {
+            return "🌐 Vamos resolver!\n\n1. Verifique se WiFi está ligado\n2. Reinicie o roteador\n3. Tente novamente\n\nNão resolveu? Me explique o problema.";
+        }
+        
+        if (text.includes('foto') || text.includes('câmera')) {
+            return "📷 Tirar foto:\n\n1. Abra a Câmera\n2. Aponte para o objetivo\n3. Toque no botão\n\nVer depois: abra o app Fotos";
+        }
+        
+        // Default response
+        return "🤖 Entendi: \"" + message + "\"\n\nPosso ajudar com computador, WhatsApp, internet, fotos, músicas e muito mais!\n\nMe diga o que precisa.";
+    }
         
         if (lowerMessage.includes('computador') || lowerMessage.includes('pc') || lowerMessage.includes('laptop')) {
             return `💻 Com prazer!\n\nMe diga o que você quer fazer:\n\n• Como usar a internet\n• Como mandar mensagem\n• Como fazer uma videochamada\n• Como tirar foto\n• Como ouvir música\n• Problemas com o computador\n\nO que você precisa?`;
