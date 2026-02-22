@@ -125,12 +125,54 @@ class OpenCodeApp {
     }
 
     async generateResponse(message) {
-        // Simple responses that always work
+        // Usar API do Cohere (funciona com CORS)
+        try {
+            const response = await fetch('https://api.cohere.ai/v1/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer HPpdnG3XH3fhOegeiPK1ggg6nP4iZK2n2O5p6rT'
+                },
+                body: JSON.stringify({
+                    model: 'command-r-08-2024',
+                    message: message,
+                    preamble: "Você é um assistente amigável que ajuda pessoas de todas as idades. Responda de forma simples e clara em português brasileiro.",
+                    max_tokens: 300
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.text) {
+                    return data.text;
+                }
+            }
+        } catch (e) {
+            console.log('Cohere failed:', e);
+        }
+        
+        // Fallback: respostas simples
         const text = message.toLowerCase();
         
         if (text.includes('whatsapp') || text.includes('mensagem')) {
             return "💬 WhatsApp é fácil!\n\n1. Abra o WhatsApp\n2. Toque em nova mensagem\n3. Escolha o contato\n4. Digite e envie\n\nQuer mais ajuda?";
         }
+        
+        if (text.includes('oi') || text.includes('ola') || text.includes('olá')) {
+            return "👋 Olá! Que bom te ver!\n\nSou seu amigo digital. Posso ajudar com:\n\n💻 Computador\n📱 Apps\n🌐 Internet\n📷 Fotos\n🎵 Músicas\n\nO que você precisa?";
+        }
+        
+        if (text.includes('internet') || text.includes('wifi')) {
+            return "🌐 Vamos resolver!\n\n1. Verifique se WiFi está ligado\n2. Reinicie o roteador\n3. Tente novamente\n\nNão resolveu? Me explique o problema.";
+        }
+        
+        if (text.includes('foto') || text.includes('câmera')) {
+            return "📷 Tirar foto:\n\n1. Abra a Câmera\n2. Aponte para o objetivo\n3. Toque no botão\n\nVer depois: abra o app Fotos";
+        }
+        
+        // Resposta padrão
+        return "Entendi: \"" + message + "\".\n\nPosso ajudar com computador, WhatsApp, internet, fotos, músicas e muito mais!\n\nMe diga o que precisa.";
+    }
         
         if (text.includes('oi') || text.includes('ola') || text.includes('olá')) {
             return "👋 Olá! Que bom te ver!\n\nSou seu amigo digital. Posso ajudar com:\n\n💻 Computador\n📱 Apps\n🌐 Internet\n📷 Fotos\n🎵 Músicas\n\nO que você precisa?";
