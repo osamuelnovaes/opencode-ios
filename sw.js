@@ -1,6 +1,6 @@
 // OpenCode Mobile - Service Worker
 
-const CACHE_NAME = 'opencode-v2';
+const CACHE_NAME = 'opencode-v5';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
