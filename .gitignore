@@ -1,0 +1,22 @@
+# OpenCode Mobile iOS
+## Versão 0.2 - PRD
+
+## Arquivos
+*.ipa
+*.app
+node_modules/
+.DS_Store
+.env
+
+## Build
+dist/
+build/
+
+## IDE
+.vscode/
+*.swp
+*.swo
+
+## Keys
+*.keystore
+*.mobileprovision
