@@ -18,7 +18,7 @@ class OpenCodeApp {
             try {
                 this.messages = JSON.parse(saved);
                 if (this.messages.length > 0) {
-                    document.getElementById('quickHelp').style.display = 'none';
+                    document.getElementById('welcomeMessage').style.display = 'none';
                     this.messages.forEach(msg => {
                         this.addMessage(msg.content, msg.role);
                     });
@@ -61,7 +61,7 @@ class OpenCodeApp {
         input.style.height = 'auto';
         document.getElementById('sendBtn').disabled = true;
         
-        document.getElementById('quickHelp').style.display = 'none';
+        document.getElementById('welcomeMessage').style.display = 'none';
         
         this.addMessage(message, 'user');
         this.messages.push({ role: 'user', content: message });

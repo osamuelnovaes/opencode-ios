@@ -27,18 +27,15 @@
         </header>
 
         <!-- Status da IA -->
-        <div id="aiStatus" class="ai-status">
-            <div class="status-dot"></div>
-            <span class="status-text">Preparando sua ajuda...</span>
-        </div>
-
-        <!-- Área de B Ajuda Rápida -->
-        <div class="quick-help" id="quickHelp">
-            <p>Digite sua mensagem e envie!</p>
-        </div>
+        <div id="aiStatus" class="ai-status" style="display: none;">
 
         <!-- Chat -->
         <main class="chat-container" id="chatContainer">
+            <div class="welcome-message" id="welcomeMessage">
+                <div class="welcome-icon">🤖</div>
+                <h2>Olá! Sou seu amigo digital!</h2>
+                <p>Digite sua mensagem e envie!</p>
+            </div>
             <div id="messagesContainer"></div>
         </main>
 
