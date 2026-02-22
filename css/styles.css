@@ -165,7 +165,7 @@ html, body {
     background: var(--bg-accent);
 }
 
-.message.ai .message-avatar {
+.message.assistant .message-avatar {
     background: var(--ai-msg);
 }
 
@@ -183,7 +183,7 @@ html, body {
     border-bottom-right-radius: 4px;
 }
 
-.message.ai .message-content {
+.message.assistant .message-content {
     background: var(--ai-msg);
     color: var(--text-primary);
     border-bottom-left-radius: 4px;
